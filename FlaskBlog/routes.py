@@ -1,8 +1,11 @@
-from flask import render_template, flash, redirect, url_for,request
+from flask import render_template, flash, redirect, url_for, request
 from FlaskBlog import app, db, pass_encrypt
-from FlaskBlog.forms import RegistrationForm, LoginForm
+from FlaskBlog.forms import RegistrationForm, LoginForm, UpdateAccountForm
 from FlaskBlog.models import User
-from flask_login import login_user, current_user, logout_user,login_required
+from flask_login import login_user, current_user, logout_user, login_required
+import secrets,os
+from PIL import Image
+
 
 posts = [
     {
@@ -57,10 +60,10 @@ def login():
             if check_password:
                 flash('Login Successful', 'success')
                 login_user(user, remember=form.remember.data)
-                next_page=request.args.get('next')
+                next_page = request.args.get('next')
                 if next_page:
-                    flash(next_page , 'info')
-                return redirect(url_for(next_page[1:])) if next_page  else redirect(url_for('home'))
+                    flash(next_page, 'info')
+                return redirect(url_for(next_page[1:])) if next_page else redirect(url_for('home'))
             else:
                 flash('Login Failed....Wrong Password', 'danger')
         else:
@@ -74,9 +77,35 @@ def logout():
     return redirect(url_for('home'))
 
 
-@app.route('/account')
+def save_pic(form_pic):
+    random_hex = secrets.token_hex(8)
+    _, f_ext = os.path.splitext(form_pic.filename)
+    pic_filename = random_hex + f_ext
+    pic_path = os.path.join(app.root_path, 'static/profiles', pic_filename)
+    form_pic.save(pic_path)
+
+    output_size = (125, 125)
+    i = Image.open(form_pic)
+    i.thumbnail(output_size)
+    i.save(pic_path)
+    return pic_filename
+
+
+@app.route('/account', methods=['GET', 'POST'])
 @login_required
 def account():
-    user_profile=url_for('static',filename='profiles/' + current_user.img_file)
-    print(user_profile)
-    return render_template('account.html', title="Account Page",img_file=user_profile)
+    form = UpdateAccountForm()
+    if form.validate_on_submit():
+        if form.pic.data:
+            pic_file = save_pic(form.pic.data)
+            current_user.img_file = pic_file
+        current_user.username = form.username.data
+        current_user.email = form.email.data
+        db.session.commit()
+        flash('Account Info Updated', 'success')
+        return redirect(url_for('account'))
+    elif request.method=='GET':
+        form.username.data = current_user.username
+        form.email.data = current_user.email
+    user_profile = url_for('static', filename='profiles/' + current_user.img_file)
+    return render_template('account.html', title="Account Page", img_file=user_profile, form=form)
