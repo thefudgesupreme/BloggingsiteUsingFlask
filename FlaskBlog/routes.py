@@ -13,7 +13,8 @@ from FlaskBlog.models import User, Posts
 @app.route('/')
 @app.route('/home')
 def home():
-    posts = Posts.query.all()
+    page = request.args.get('page', default=1, type=int)
+    posts = Posts.query.order_by(Posts.date_posted.desc()).paginate(page=page, per_page=5)
     return render_template('home.html', title="  Home", posts=posts)
 
 
@@ -149,3 +150,13 @@ def postDelete(postId):
     db.session.commit()
     flash('Post has been deleted successfully', 'success')
     return redirect(url_for('home'))
+
+
+@app.route("/user/<string:username>")
+def userPost(username):
+    page = request.args.get('page', default=1, type=int)
+    user = User.query.filter_by(username=username).first_or_404()
+    posts = Posts.query.filter_by(author=user) \
+        .order_by(Posts.date_posted.desc()) \
+        .paginate(page=page, per_page=5)
+    return render_template('userPost.html', title="  Home", posts=posts, user=user)
