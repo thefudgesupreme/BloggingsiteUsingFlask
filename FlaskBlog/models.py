@@ -1,7 +1,8 @@
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
-from FlaskBlog import db, login_manager, app
+from FlaskBlog import db, login_manager
 from datetime import datetime
 from flask_login import UserMixin
+from flask import current_app
 
 
 @login_manager.user_loader
@@ -18,12 +19,12 @@ class User(db.Model, UserMixin):
     posts = db.relationship('Posts', backref="author", lazy=True)
 
     def getResetToken(self,expireSec=1800):
-        s=Serializer(app.config['SECRET_KEY'],expireSec)
+        s=Serializer(current_app.config['SECRET_KEY'],expireSec)
         return s.dumps({'user_id':self.id}).decode('utf-8')
 
     @staticmethod
     def verifyResetToken(token):
-        s=Serializer(app.config['SECRET_KEY'])
+        s=Serializer(current_app.config['SECRET_KEY'])
         try:
             user_id=s.loads(token)['user_id']
         except:
