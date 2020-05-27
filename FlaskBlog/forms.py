@@ -19,7 +19,7 @@ class RegistrationForm(FlaskForm):
         if user:
             raise ValidationError('Bad Luck....That\'s already Taken..!!!')
 
-    def validate_field(self, email):
+    def validate_email(self, email):
         temp_email = User.query.filter_by(username=email.data).first()
         if temp_email:
             raise ValidationError('Too bad That one\'s taken,Choose Another One...!!!')
@@ -55,3 +55,22 @@ class PostForm(FlaskForm):
     title = StringField('Title', validators=[DataRequired()])
     content = TextAreaField('Content', validators=[DataRequired()])
     submit = SubmitField('Post')
+
+class RequestResetForm(FlaskForm):
+    email = StringField('Email', validators=[DataRequired(), Email()])
+    submit = SubmitField('Request Password Reset')
+
+    def validate_field(self, email):
+        user = User.query.filter_by(username=email.data).first()
+        if user is None:
+            raise ValidationError('Sorry Mate, You don\'t have an account to reset email....!!!')
+
+class ResetPasswordForm(FlaskForm):
+    password = PasswordField('Password', validators=[DataRequired()])
+    confirmPassword = PasswordField('Confirm Password', validators=[DataRequired(), EqualTo('password')])
+    submit = SubmitField('Reset Password')
+
+
+
+
+
