@@ -4,9 +4,6 @@ from flask_bcrypt import Bcrypt
 from flask_login import LoginManager
 from FlaskBlog.config import Config
 
-
-
-
 db = SQLAlchemy()
 pass_encrypt=Bcrypt()
 login_manager=LoginManager()
