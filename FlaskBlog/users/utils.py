@@ -4,6 +4,8 @@ from email.message import EmailMessage
 from PIL import Image
 from flask import url_for,current_app
 
+from FlaskBlog import mail,fromEmail,emailPassword
+
 
 
 def save_pic(form_pic):
@@ -33,6 +35,7 @@ If you don't want to change password then don't do anything & password won't be 
     msg['Subject'] = "Password Reset Request"
     msg['From'] = fromEmail
     msg['To'] = toEmail
-    mail.login(fromEmail, 'PrincessLeia')
+    mail.starttls()
+    mail.login(fromEmail, emailPassword)
     mail.send_message(msg)
     mail.quit()
